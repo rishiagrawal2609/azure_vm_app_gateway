@@ -148,6 +148,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   ]
 
   disable_password_authentication = false
+  admin_password                  = var.admin_password
 
   os_disk {
     caching              = "ReadWrite"

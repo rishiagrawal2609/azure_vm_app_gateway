@@ -11,6 +11,7 @@ vm_subnet_cidr               = "10.0.3.0/24"
 # VM Configuration
 vm_size              = "Standard_B1s"
 admin_username       = "azureuser"
+admin_password       = "YourSecurePassword123!"
 
 # Application Gateway Configuration
 app_gateway_name     = "app-gateway"
