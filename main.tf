@@ -147,10 +147,7 @@ resource "azurerm_linux_virtual_machine" "main" {
     azurerm_network_interface.vm.id,
   ]
 
-  admin_ssh_key {
-    username   = var.admin_username
-    public_key = file(var.ssh_public_key_path)
-  }
+  disable_password_authentication = false
 
   os_disk {
     caching              = "ReadWrite"

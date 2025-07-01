@@ -15,7 +15,7 @@ The setup includes:
 
 1. **Azure CLI** installed and authenticated
 2. **Terraform** (version >= 1.0)
-3. **SSH key pair** for VM access
+3. **Azure subscription** with sufficient permissions
 4. **Azure subscription** with sufficient permissions
 
 ## Quick Start
@@ -25,34 +25,28 @@ The setup includes:
    cd azure_vm_app_gateway
    ```
 
-2. **Generate SSH key pair (if not exists):**
-   ```bash
-   ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
-   ```
-
-3. **Copy the example variables file:**
+2. **Copy the example variables file:**
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    ```
 
-4. **Edit terraform.tfvars** with your specific values:
+3. **Edit terraform.tfvars** with your specific values:
    ```hcl
    resource_group_name = "your-resource-group-name"
    location            = "your-preferred-region"
-   ssh_public_key_path = "~/.ssh/id_rsa.pub"
    ```
 
-5. **Initialize Terraform:**
+4. **Initialize Terraform:**
    ```bash
    terraform init
    ```
 
-6. **Plan the deployment:**
+5. **Plan the deployment:**
    ```bash
    terraform plan
    ```
 
-7. **Apply the configuration:**
+6. **Apply the configuration:**
    ```bash
    terraform apply
    ```
@@ -70,7 +64,6 @@ The setup includes:
 | `vm_subnet_cidr` | VM subnet | `10.0.3.0/24` |
 | `vm_size` | VM size | `Standard_B1s` |
 | `admin_username` | VM admin username | `azureuser` |
-| `ssh_public_key_path` | Path to SSH public key | `~/.ssh/id_rsa.pub` |
 
 ### Network Architecture
 
@@ -124,10 +117,7 @@ After successful deployment, you'll get:
 
 ## VM Access
 
-SSH into the VM using the private IP:
-```bash
-ssh azureuser@<vm-private-ip>
-```
+The VM is configured with password authentication enabled. You can access it through the Azure portal or using SSH with the admin username.
 
 ## Cleanup
 
@@ -140,11 +130,7 @@ terraform destroy
 
 ### Common Issues
 
-1. **SSH Key Issues:**
-   - Ensure the SSH public key file exists and is readable
-   - Verify the key format is correct
-
-2. **Application Gateway Health Checks:**
+1. **Application Gateway Health Checks:**
    - Check if Apache is running on the VM
    - Verify the `/health` endpoint is accessible
    - Check NSG rules allow traffic from Application Gateway subnet
