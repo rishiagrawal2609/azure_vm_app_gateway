@@ -1,0 +1,161 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - apache2
+  - curl
+  - wget
+  - unzip
+
+runcmd:
+  # Start and enable Apache
+  - systemctl start apache2
+  - systemctl enable apache2
+  
+  # Create a comprehensive status page
+  - |
+    cat > /var/www/html/index.html << 'HTML_EOF'
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Azure Application Gateway Test Page</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+            .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { text-align: center; color: #2c3e50; border-bottom: 3px solid #0078d4; padding-bottom: 20px; margin-bottom: 30px; }
+            .status { background: #e8f5e8; border: 1px solid #4caf50; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .info { background: #e3f2fd; border: 1px solid #0078d4; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .section { margin: 20px 0; }
+            .section h3 { color: #2c3e50; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+            code { background: #f8f9fa; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+            .timestamp { color: #7f8c8d; font-size: 0.9em; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🚀 Azure Application Gateway Test Page</h1>
+                <p>Your Azure infrastructure is working correctly!</p>
+            </div>
+            
+            <div class="status">
+                <h3>✅ Status: Online</h3>
+                <p>This page confirms that your Azure Application Gateway is successfully routing traffic to your VM.</p>
+            </div>
+            
+            <div class="section">
+                <h3>📊 System Information</h3>
+                <div class="info">
+                    <p><strong>Hostname:</strong> <code>$(hostname)</code></p>
+                    <p><strong>Private IP:</strong> <code>$(hostname -I | awk '{print $1}')</code></p>
+                    <p><strong>OS:</strong> <code>$(lsb_release -d | cut -f2)</code></p>
+                    <p><strong>Kernel:</strong> <code>$(uname -r)</code></p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>🌐 Network Information</h3>
+                <div class="info">
+                    <p><strong>Apache Version:</strong> <code>$(apache2 -v | head -1)</code></p>
+                    <p><strong>Server Time:</strong> <code>$(date)</code></p>
+                    <p><strong>Uptime:</strong> <code>$(uptime -p)</code></p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>🔧 Health Check Endpoints</h3>
+                <div class="info">
+                    <p><strong>Main Page:</strong> <code>/</code> (this page)</p>
+                    <p><strong>Health Check:</strong> <code>/health</code></p>
+                    <p><strong>Status:</strong> <code>/status</code></p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>📝 Architecture Overview</h3>
+                <div class="info">
+                    <p>This setup demonstrates:</p>
+                    <ul>
+                        <li>✅ Azure Application Gateway for load balancing</li>
+                        <li>✅ VM in private subnet for security</li>
+                        <li>✅ Proper Network Security Group configuration</li>
+                        <li>✅ Health checks and backend pool routing</li>
+                        <li>✅ Multi-subnet deployment for high availability</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="timestamp">
+                <p>Page generated on: <code>$(date)</code></p>
+            </div>
+        </div>
+    </body>
+    </html>
+    HTML_EOF
+  
+  # Create health check endpoint
+  - |
+    cat > /var/www/html/health << 'HEALTH_EOF'
+    {
+      "status": "healthy",
+      "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+      "hostname": "$(hostname)",
+      "private_ip": "$(hostname -I | awk '{print $1}')",
+      "service": "apache2",
+      "version": "$(apache2 -v | head -1 | cut -d' ' -f3 | cut -d'/' -f2)"
+    }
+    HEALTH_EOF
+  
+  # Create status endpoint
+  - |
+    cat > /var/www/html/status << 'STATUS_EOF'
+    <!DOCTYPE html>
+    <html>
+    <head><title>Server Status</title></head>
+    <body>
+        <h2>Server Status</h2>
+        <p><strong>Apache Status:</strong> $(systemctl is-active apache2)</p>
+        <p><strong>Uptime:</strong> $(uptime)</p>
+        <p><strong>Load Average:</strong> $(uptime | awk -F'load average:' '{print $2}')</p>
+        <p><strong>Memory Usage:</strong> $(free -h | grep Mem | awk '{print $3"/"$2}')</p>
+        <p><strong>Disk Usage:</strong> $(df -h / | tail -1 | awk '{print $5}')</p>
+        <p><strong>Last Updated:</strong> $(date)</p>
+    </body>
+    </html>
+    STATUS_EOF
+  
+  # Set proper permissions
+  - chown www-data:www-data /var/www/html/*
+  - chmod 644 /var/www/html/*
+  
+  # Create a simple test script for debugging
+  - |
+    cat > /home/${admin_username}/test-connection.sh << 'SCRIPT_EOF'
+    #!/bin/bash
+    echo "=== Connection Test Script ==="
+    echo "Testing local Apache connection..."
+    curl -s -o /dev/null -w "HTTP Status: %%{http_code}\n" http://localhost/
+    echo "Testing metadata service..."
+    curl -s http://169.254.169.254/metadata/instance?api-version=2021-02-01 -H "Metadata: true"
+    echo ""
+    echo "=== System Information ==="
+    echo "Hostname: $(hostname)"
+    echo "IP Address: $(hostname -I)"
+    echo "Apache Status: $(systemctl is-active apache2)"
+    echo "=== End Test ==="
+    SCRIPT_EOF
+  
+  - chmod +x /home/${admin_username}/test-connection.sh
+  - chown ${admin_username}:${admin_username} /home/${admin_username}/test-connection.sh
+  
+  # Log the setup completion
+  - echo "Web server setup completed at $(date)" >> /var/log/web-setup.log
+  
+  # Test Apache is working
+  - echo "Testing Apache..."
+  - curl -s http://localhost/ > /dev/null && echo "Apache test successful" || echo "Apache test failed"
+  
+  - echo "Cloud-init script completed at $(date)" 
